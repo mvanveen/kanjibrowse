@@ -8,6 +8,9 @@ module Glyph
     , renderSvg
     ) where
 
+import Control.Applicative ((<$>))
+import Data.Maybe (catMaybes)
+
 import Text.XML.Light as X
 import Text.XML.Light.Input as XI
 import Text.XML.Light.Output as XO
@@ -18,21 +21,24 @@ data Glyph
         { groupName :: Maybe String
         , groupSubGlyphs :: [Glyph]
         }
+    deriving (Show, Eq)
 
 xmlnsAttr = uqAttr "xmlns" "http://www.w3.org/2000/svg"
 xlinkAttr = X.Attr
-              X.QName{ qName = "xlink", qURI = Nothing, qPrefix = "xmlns" }
+              X.QName{ qPrefix = Just "xmlns", qName = "xlink", qURI = Nothing }
               "http://www.w3.org/1999/xlink"
+
+hrefName = X.QName{ qPrefix = Just "xlink", qName = "href", qURI = Nothing }
 
 parseKvg :: String -> Maybe Glyph
 parseKvg kvg = do
     xml <- XI.parseXMLDoc kvg
-    return $  xml
+    parseKvgXml xml
 
 writeKvg :: Glyph -> String
 writeKvg glyph = XO.showTopElement $ kvg
   where
-    kvg = X.unode "svg" (attrs, writeKvgXml glyph)
+    kvg = X.unode "svg" (attrs, [writeKvgXml glyph])
     attrs =
       [ xmlnsAttr
       , uqAttr "width"   "109"
@@ -41,12 +47,12 @@ writeKvg glyph = XO.showTopElement $ kvg
       ]
 
 parseKvgXml :: X.Element -> Maybe Glyph
-parseKvgXml xml
+parseKvgXml xml = undefined
 
 writeKvgXml :: Glyph -> X.Element
 writeKvgXml = \case
-    Path{..}  -> X.unode "path" $ mkAttr "d" pathData
-    Group{..} -> X.unode "g" $ ([mkAttr "element" groupName], map writeXML groupSubGlyphs)
+    Path{..}  -> X.unode "path" $ uqAttr "d" pathData
+    Group{..} -> X.unode "g" $ (catMaybes [uqAttr "element" <$> groupName], map writeKvgXml groupSubGlyphs)
 
 renderSvg :: Glyph -> String
 renderSvg glyph = XO.showTopElement $ svg
@@ -61,7 +67,12 @@ renderSvg glyph = XO.showTopElement $ svg
       ]
 
 renderSvgXml :: Glyph -> X.Element
-renderSvgXml = undefined
+renderSvgXml = \case
+    Path{..}  -> X.unode "path" $ uqAttr "d" pathData
+    Group{..} ->
+      case groupName of
+        Just element -> X.unode "a" ([X.Attr hrefName element], [X.unode "g" $ map renderSvgXml groupSubGlyphs])
+        Nothing      -> X.unode "g" $ map renderSvgXml groupSubGlyphs
 
 uqAttr :: String -> String -> X.Attr
 uqAttr = X.Attr . X.unqual
