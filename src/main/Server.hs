@@ -14,7 +14,6 @@ main = do
 
 app req = do
     let path = pathInfo req
-    
 
 showSVG = responseBuilder status200 [ ("Content-Type", "application/xhtml+xml") ] $ mconcat $ map copyByteString
     ["yay"]
