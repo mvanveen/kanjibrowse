@@ -7,6 +7,7 @@ module Glyph
     , parseKvg
     , writeKvg
     , renderSvg
+    , glyphName
     ) where
 
 import Control.Applicative ((<$>))
@@ -26,6 +27,11 @@ data Glyph
         , groupSubGlyphs :: [Glyph]
         }
     deriving (Show, Eq)
+
+glyphName :: Glyph -> Maybe Char
+glyphName = \case
+  Group{..} -> head <$> groupName
+  Path{..}  -> Nothing
 
 xmlnsAttr = uqAttr "xmlns" "http://www.w3.org/2000/svg"
 xlinkAttr = X.Attr (xmlnsName "xlink") "http://www.w3.org/1999/xlink"
@@ -57,7 +63,7 @@ parseKvgXml :: X.Element -> Maybe Glyph
 parseKvgXml xml = do
     svg <- filterName (("svg" ==) . X.qName) xml
     strokePaths <- X.filterElement isStrokePathGroup svg
-    parseKvgGlyph strokePaths
+    parseKvgGlyph $ head $ X.elChildren $ strokePaths
 
 filterName :: (X.QName -> Bool) -> X.Element -> Maybe X.Element
 filterName pred elem = if pred $ X.elName elem then Just elem else Nothing
