@@ -6,29 +6,26 @@ import Network.HTTP.Types (status200)
 import Blaze.ByteString.Builder (copyByteString)
 import qualified Data.ByteString.UTF8 as BU
 import Data.Monoid
+import qualified Data.Text as T
 
 import Glyph
 import GlyphDB
 
 main = do
     db <- loadGlyphDB "db/kanji"
-    let glyph = head $ db ! '廟'
-    putStrLn $ renderSvg glyph
+    server db
 
-server = do
+server db = do
     let port = 3000
     putStrLn $ "Listening on port " ++ show port
-    run port app
+    run port $ app db
 
-app req = do
+app db req = do
     let path = pathInfo req
-    return $ index path
+        root = T.head $ head $ path
+        glyph = head $ db ! root
+    putStrLn $ "path: " ++ show path
+    putStrLn $ "lookup: " ++ [root]
+    return $ svg glyph
 
-{-
-showSVG = responseBuilder status200 [ ("Content-Type", "application/xhtml+xml") ] $ mconcat $ map copyByteString
-    ["yay"]
--}
-
-index x = responseBuilder status200 [("Content-Type", "text/html")] $ mconcat $ map copyByteString
-    [ "<p>Hello from ", BU.fromString $ show x, "!</p>"
-    , "<p><a href='/yay'>yay</a></p>\n" ]
+svg glyph = responseBuilder status200 [("Content-Type", "image/svg+xml")] $ mconcat $ map copyByteString $ [BU.fromString $ renderSvg glyph]

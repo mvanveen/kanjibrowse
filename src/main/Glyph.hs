@@ -126,8 +126,11 @@ renderSvgXml :: Int -> Glyph -> X.Element
 renderSvgXml level = \case
     Path{..}  -> X.unode "path" $ uqAttr "d" pathData
     Group{..} ->
-      let content = X.unode "g" $ map (renderSvgXml $ level+1) groupSubGlyphs
+      let content = X.unode "g" $ map (renderSvgXml $ level+d) groupSubGlyphs
           subName = if level == 0 then groupName else Nothing
+          d = case groupName of
+                Just _  -> 1
+                Nothing -> 0 
       in case subName of
         Just element -> X.unode "a" ([X.Attr (xlinkName "href") element], [content])
         Nothing      -> content
