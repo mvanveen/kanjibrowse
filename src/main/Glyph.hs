@@ -3,7 +3,7 @@
            , RecordWildCards
            #-}
 module Glyph
-    ( Glyph
+    ( Glyph(..)
     , parseKvg
     , writeKvg
     , renderSvg
@@ -11,6 +11,7 @@ module Glyph
     ) where
 
 import Control.Applicative ((<$>))
+import Control.DeepSeq (force, NFData(..))
 import Data.Generics.Aliases (orElse)
 import Data.List (isPrefixOf)
 import Data.Maybe (catMaybes)
@@ -27,6 +28,11 @@ data Glyph
         , groupSubGlyphs :: [Glyph]
         }
     deriving (Show, Eq)
+
+instance NFData Glyph where
+  rnf = \case
+    Path{..}  -> rnf pathData
+    Group{..} -> rnf groupName `seq` rnf groupSubGlyphs
 
 glyphName :: Glyph -> Maybe Char
 glyphName = \case

@@ -1,14 +1,21 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings
+           , LambdaCase
+           , RecordWildCards
+           #-}
 module GlyphDB (loadGlyphDB) where
 
 import Control.Monad (filterM)
+import Control.Exception (evaluate)
+import Control.DeepSeq (force, NFData(..))
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import qualified Data.Conduit.Combinators as CL (filterM)
 import qualified Data.HashMap.Strict as Map
 import Data.Maybe (fromMaybe)
+import qualified Data.Traversable as T
 import System.Directory
 import System.FilePath ((</>))
+import System.IO.Strict as IO
 
 import Glyph
 
@@ -38,5 +45,5 @@ loadGlyphs path = do
            =$= parseGlyphs
     prependBase = CL.map (path </>)
     filterFiles = CL.filterM doesFileExist
-    readFiles = CL.mapM readFile
-    parseGlyphs = CL.mapMaybe parseKvg
+    readFiles = CL.mapM IO.readFile -- IO.readFile is strict; file handles get recycled ASAP
+    parseGlyphs = CL.mapMaybeM $ T.mapM (evaluate . force) . parseKvg
