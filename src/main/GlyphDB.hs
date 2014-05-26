@@ -2,7 +2,7 @@
            , LambdaCase
            , RecordWildCards
            #-}
-module GlyphDB (loadGlyphDB) where
+module GlyphDB (loadGlyphDB, (Map.!)) where
 
 import Control.Monad (filterM)
 import Control.Exception (evaluate)
@@ -24,9 +24,7 @@ type GlyphDB = Map.HashMap Char [Glyph]
 loadGlyphDB :: FilePath -> IO GlyphDB
 loadGlyphDB path = do
     glyphs <- loadGlyphs path
-    putStrLn $ "number of glyphs loaded: " ++ show (length glyphs)
     let db = Map.fromListWith (++) $ map indexer glyphs
-    putStrLn $ "number of DB entries: " ++ show (Map.size db)
     return db
 
 indexer :: Glyph -> (Char, [Glyph])

@@ -60,10 +60,11 @@ writeKvg glyph = X.showTopElement $ kvg
     kvg = X.unode "svg" (attrs, [writeKvgXml glyph])
     attrs =
       [ xmlnsAttr
-      , uqAttr "width"   "109"
-      , uqAttr "height"  "109"
+      , uqAttr "width"  $ show size
+      , uqAttr "height" $ show size
       , uqAttr "viewBox" "0 0 109 109"
       ]
+    size = 109
 
 parseKvgXml :: X.Element -> Maybe Glyph
 parseKvgXml xml = do
@@ -107,22 +108,29 @@ writeKvgXml = \case
 renderSvg :: Glyph -> String
 renderSvg glyph = X.showTopElement $ svg
   where
-    svg = X.unode "svg" (attrs, renderSvgXml glyph)
+    svg = X.unode "svg" (attrs, [style, g])
+    g = X.unode "g" (uqAttr "class" "top", renderSvgXml (-1) glyph)
+    style = X.unode "style" (aStyle ++ pathStyle)
+    aStyle = "a:hover{stroke:red;stroke-width:4;}" :: String
+    pathStyle = "g.top{fill:none;stroke:black;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}"
     attrs =
       [ xmlnsAttr
       , xlinkAttr
-      , uqAttr "width"   "109"
-      , uqAttr "height"  "109"
+      , uqAttr "width"  $ show size
+      , uqAttr "height" $ show size
       , uqAttr "viewBox" "0 0 109 109"
       ]
+    size = 4 * 109
 
-renderSvgXml :: Glyph -> X.Element
-renderSvgXml = \case
+renderSvgXml :: Int -> Glyph -> X.Element
+renderSvgXml level = \case
     Path{..}  -> X.unode "path" $ uqAttr "d" pathData
     Group{..} ->
-      case groupName of
-        Just element -> X.unode "a" ([X.Attr (xlinkName "href") element], [X.unode "g" $ map renderSvgXml groupSubGlyphs])
-        Nothing      -> X.unode "g" $ map renderSvgXml groupSubGlyphs
+      let content = X.unode "g" $ map (renderSvgXml $ level+1) groupSubGlyphs
+          subName = if level == 0 then groupName else Nothing
+      in case subName of
+        Just element -> X.unode "a" ([X.Attr (xlinkName "href") element], [content])
+        Nothing      -> content
 
 uqAttr :: String -> String -> X.Attr
 uqAttr = X.Attr . X.unqual
