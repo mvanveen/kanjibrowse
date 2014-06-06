@@ -7,6 +7,7 @@ module Glyph
     , parseKvg
     , writeKvg
     , renderSvg
+    , renderXhtml
     , glyphName
     ) where
 
@@ -134,6 +135,11 @@ renderSvgXml level = \case
       in case subName of
         Just element -> X.unode "a" ([X.Attr (xlinkName "href") element], [content])
         Nothing      -> content
+
+renderXhtml :: Glyph -> X.Element
+renderXhtml = \case
+  Path{..}  -> X.unode "li" CData{ cdVerbatim = CDataText, cdData = "path", cdLine = Nothing }
+  Group{..} -> X.unode "ol" $ map renderXhtml groupSubGlyphs
 
 uqAttr :: String -> String -> X.Attr
 uqAttr = X.Attr . X.unqual

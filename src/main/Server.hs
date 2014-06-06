@@ -8,6 +8,9 @@ import qualified Data.ByteString.UTF8 as BU
 import Data.Monoid
 import qualified Data.Text as T
 
+import qualified Text.XML.Light as X
+import qualified Text.XML.Light.Output as X
+
 import Glyph
 import GlyphDB
 
@@ -28,4 +31,6 @@ app db req = do
     putStrLn $ "lookup: " ++ [root]
     return $ svg glyph
 
-svg glyph = responseBuilder status200 [("Content-Type", "image/svg+xml")] $ mconcat $ map copyByteString $ [BU.fromString $ renderSvg glyph]
+svg glyph = responseBuilder status200 [("Content-Type", "text/html")]
+    $ mconcat $ map copyByteString $
+    [BU.fromString $ X.ppShowElement $ X.unode "html" $ X.unode "body" $ renderXhtml glyph]
