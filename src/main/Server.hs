@@ -33,4 +33,4 @@ app db req = do
 
 svg glyph = responseBuilder status200 [("Content-Type", "text/html")]
     $ mconcat $ map copyByteString $
-    [BU.fromString $ X.ppShowElement $ X.unode "html" $ X.unode "body" $ renderXhtml glyph]
+    [BU.fromString $ X.ppElement $ X.unode "html" $ X.unode "body" $ renderXhtml glyph]

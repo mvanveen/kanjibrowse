@@ -138,8 +138,8 @@ renderSvgXml level = \case
 
 renderXhtml :: Glyph -> X.Element
 renderXhtml = \case
-  Path{..}  -> X.unode "li" CData{ cdVerbatim = CDataText, cdData = "path", cdLine = Nothing }
-  Group{..} -> X.unode "ol" $ map renderXhtml groupSubGlyphs
+  Path{..}  -> X.unode "span" CData{ cdVerbatim = CDataText, cdData = "path", cdLine = Nothing }
+  Group{..} -> X.unode "ol" $ map (X.unode "li" . renderXhtml) groupSubGlyphs
 
 uqAttr :: String -> String -> X.Attr
 uqAttr = X.Attr . X.unqual
