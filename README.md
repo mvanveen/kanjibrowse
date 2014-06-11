@@ -1,4 +1,4 @@
-kanjiview
+kanjibrowse
 =========
 
 Display the structure of kanji.
