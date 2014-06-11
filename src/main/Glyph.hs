@@ -5,8 +5,6 @@
 module Glyph
     ( Glyph(..)
     , parseKvg
-    , writeKvg
-    , renderSvgXml
     , renderXhtml
     , glyphName
     ) where
@@ -53,12 +51,12 @@ prefixName prefix name = X.QName{ qPrefix = Just prefix, qName = name, qURI = No
 parseKvg :: String -> Maybe Glyph
 parseKvg kvg = do
     xml <- X.parseXMLDoc kvg
-    parseKvgXml xml
+    parseKvg' xml
 
 writeKvg :: Glyph -> String
 writeKvg glyph = X.showTopElement $ kvg
   where
-    kvg = X.unode "svg" (attrs, [writeKvgXml glyph])
+    kvg = X.unode "svg" (attrs, [writeKvg' glyph])
     attrs =
       [ xmlnsAttr
       , uqAttr "width"  $ show size
@@ -67,8 +65,8 @@ writeKvg glyph = X.showTopElement $ kvg
       ]
     size = 109
 
-parseKvgXml :: X.Element -> Maybe Glyph
-parseKvgXml xml = do
+parseKvg' :: X.Element -> Maybe Glyph
+parseKvg' xml = do
     svg <- filterName (("svg" ==) . X.qName) xml
     strokePaths <- X.filterElement isStrokePathGroup svg
     parseKvgGlyph $ head $ X.elChildren $ strokePaths
@@ -101,15 +99,41 @@ parseKvgGroup elem = do
         subGlyphs = catMaybes $ map parseKvgGlyph $ X.elChildren g
     return $ Group{ groupName = name, groupSubGlyphs = subGlyphs }
 
-writeKvgXml :: Glyph -> X.Element
-writeKvgXml = \case
+writeKvg' :: Glyph -> X.Element
+writeKvg' = \case
     Path{..}  -> X.unode "path" $ uqAttr "d" pathData
-    Group{..} -> X.unode "g" $ (catMaybes [uqAttr "element" <$> groupName], map writeKvgXml groupSubGlyphs)
+    Group{..} -> X.unode "g" $ (catMaybes [uqAttr "element" <$> groupName], map writeKvg' groupSubGlyphs)
 
-renderSvgXml :: Glyph -> X.Element
-renderSvgXml glyph = X.unode "svg" (attrs, [style, g])
+renderLinkedSvg :: Glyph -> X.Element
+renderLinkedSvg glyph = X.unode "svg" (attrs, [style, g])
   where
-    g = X.unode "g" (uqAttr "class" "top", renderSvgXml' glyph)
+    g = X.unode "g" (uqAttr "class" "top", renderLinkedSvg' (-1) glyph)
+    style = X.unode "style" (aStyle ++ pathStyle)
+    aStyle = "a:hover{stroke:red;stroke-width:4;}" :: String
+    pathStyle = "g.top{fill:none;stroke:black;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}"
+    attrs =
+      [ xmlnsAttr
+      , xlinkAttr
+      , uqAttr "width"  $ show size
+      , uqAttr "height" $ show size
+      , uqAttr "viewBox" "0 0 109 109"
+      ]
+    size = 4 * 109
+
+renderLinkedSvg' :: Int -> Glyph -> X.Element
+renderLinkedSvg' level = \case
+    Path{..}  -> X.unode "path" $ uqAttr "d" pathData
+    Group{..} ->
+      let content = X.unode "g" $ map (renderLinkedSvg' $ level+1) groupSubGlyphs
+          subName = if level == 0 then groupName else Nothing
+      in case subName of
+        Just element -> X.unode "a" ([X.Attr (xlinkName "href") element], [content])
+        Nothing      -> content
+
+renderSvg :: Glyph -> X.Element
+renderSvg glyph = X.unode "div" ([uqAttr "border" "1px"], [X.unode "svg" (attrs, [style, g])])
+  where
+    g = X.unode "g" (uqAttr "class" "top", renderSvg' glyph)
     style = X.unode "style" (aStyle ++ pathStyle)
     aStyle = "a:hover{stroke:red;stroke-width:4;}" :: String
     pathStyle = "g.top{fill:none;stroke:black;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}"
@@ -122,15 +146,21 @@ renderSvgXml glyph = X.unode "svg" (attrs, [style, g])
       ]
     size = 0.3 * 109
 
-renderSvgXml' :: Glyph -> X.Element
-renderSvgXml' = \case
+renderSvg' :: Glyph -> X.Element
+renderSvg' = \case
     Path{..}  -> X.unode "path" $ uqAttr "d" pathData
-    Group{..} -> X.unode "g" $ map renderSvgXml' groupSubGlyphs
+    Group{..} -> X.unode "g" $ map renderSvg' groupSubGlyphs
+
+renderTree :: Glyph -> X.Element
+renderTree = \case
+  glyph@Group{..} -> X.unode "span" $ [renderSvg glyph, X.unode "ul" $ map (X.unode "li" . renderTree) groupSubGlyphs]
+  glyph@Path{..}  -> X.unode "span" $ renderSvg glyph
 
 renderXhtml :: Glyph -> X.Element
-renderXhtml = \case
-  glyph@Group{..} -> X.unode "span" $ [renderSvgXml glyph, X.unode "ol" $ map (X.unode "li" . renderXhtml) groupSubGlyphs]
-  glyph@Path{..}  -> X.unode "span" $ renderSvgXml glyph
+renderXhtml glyph = X.unode "table" $ X.unode "tr" $ map (X.unode "td") [image, tree]
+  where
+    tree = renderTree glyph
+    image = renderLinkedSvg glyph
 
 uqAttr :: String -> String -> X.Attr
 uqAttr = X.Attr . X.unqual
