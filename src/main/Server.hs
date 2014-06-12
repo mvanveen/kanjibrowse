@@ -31,6 +31,6 @@ app db req = do
     putStrLn $ "lookup: " ++ [root]
     return $ svg glyph
 
-svg glyph = responseBuilder status200 [("Content-Type", "text/html")]
+svg glyph = responseBuilder status200 [("Content-Type", "text/html; charset=utf-8")]
     $ mconcat $ map copyByteString $
     [BU.fromString $ X.ppElement $ X.unode "html" $ X.unode "body" $ renderXhtml glyph]

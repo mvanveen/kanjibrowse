@@ -134,9 +134,8 @@ renderSvg :: Glyph -> X.Element
 renderSvg glyph = X.unode "div" ([uqAttr "border" "1px"], [X.unode "svg" (attrs, [style, g])])
   where
     g = X.unode "g" (uqAttr "class" "top", renderSvg' glyph)
-    style = X.unode "style" (aStyle ++ pathStyle)
-    aStyle = "a:hover{stroke:red;stroke-width:4;}" :: String
-    pathStyle = "g.top{fill:none;stroke:black;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}"
+    style = X.unode "style" pathStyle
+    pathStyle = "g.top{fill:none;stroke:black;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}" :: String
     attrs =
       [ xmlnsAttr
       , xlinkAttr

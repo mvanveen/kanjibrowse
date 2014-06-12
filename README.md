@@ -38,4 +38,4 @@ cabal build
 ```
 
 ### Enjoy
-Point your browser at http://localhost:3000/朝
+Point your browser at http://localhost:3000/働
