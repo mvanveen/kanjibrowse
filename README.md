@@ -3,7 +3,7 @@ kanjibrowse
 
 Display the structure of kanji.
 
-## How to Build
+## Installation
 
 ### Download & Extract the KanjiVG Database
 ```
