@@ -15,6 +15,7 @@ unzip db/kanjivg-20130901-all.zip -d db
 On Ubuntu, run:
 ```
 sudo apt-get install haskell-platform
+cabal update
 ```
 
 ### Create Cabal Sandbox
@@ -24,7 +25,8 @@ cabal sandbox init
 
 ### Install Dependencies
 ```
-cabal install --dependencies-only
+cd /path/to/kanjibrowse/repo
+cabal install --only-dependencies
 ```
 
 ### Build
