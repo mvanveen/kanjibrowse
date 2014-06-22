@@ -9,22 +9,22 @@ cabal-version:         >=1.10
 
 executable server
   build-depends:       base >=4.7 && <4.8
-                     , blaze-builder>=0.3
-                     , utf8-string>=0.3
-                     , http-types>=0.8
-                     , wai>=2.1
-                     , warp>=2.1
-                     , xml>=1.3
-                     , syb>=0.4.1
-                     , containers>=0.5.5.1
-                     , directory>=1.2.1
-                     , filepath>=1.3.0.2
-                     , strict>=0.3.2
-                     , unordered-containers>=0.2.4.0
-                     , conduit>=1.1.2.1
-                     , conduit-combinators>=0.2.5.1
-                     , deepseq>=1.3.0.2
-                     , text>=1.1.1.2
+                     , blaze-builder ==0.3.*
+                     , utf8-string ==0.3.*
+                     , http-types ==0.8.*
+                     , wai ==2.1.*
+                     , warp ==2.1.*
+                     , xml ==1.3.*
+                     , syb ==0.4.*
+                     , containers ==0.5.*
+                     , directory ==1.2.*
+                     , filepath ==1.3.*
+                     , strict ==0.3.*
+                     , unordered-containers ==0.2.*
+                     , conduit ==1.1.*
+                     , conduit-combinators ==0.2.*
+                     , deepseq ==1.3.*
+                     , text ==1.1.*
   hs-source-dirs:      src/main
   --ghc-options:         -rtsopts
   main-is:             Server.hs
